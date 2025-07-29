@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络图分析结果 - 资金流向分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        .main-container {
+            margin: 30px 0;
+        }
+        .result-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .header-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        .network-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 600px;
+        }
+        .legend-box {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .legend-item {
+            display: inline-block;
+            margin: 10px 20px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+        }
+        .legend-borrow {
+            background-color: #FF6B6B;
+        }
+        .legend-lend {
+            background-color: #51CF66;
+        }
+        .legend-neutral {
+            background-color: #adb5bd;
+        }
+        .download-section {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+        }
+        .btn-download {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            margin: 10px;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-download:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .network-iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- 头部 -->
+            <div class="result-card header-card">
+                <h1><i class="fas fa-project-diagram me-3"></i>资金流向网络图分析</h1>
+                <p class="mb-0">文件：{{ result.filename }}</p>
+            </div>
+
+            <!-- 整体统计 -->
+            <div class="result-card">
+                <h3><i class="fas fa-chart-bar me-2 text-primary"></i>网络统计概览</h3>
+                <div class="row">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card">
+                            <h4 class="text-primary">{{ result.stats.node_count }}</h4>
+                            <p class="mb-0 text-muted">节点数量</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card">
+                            <h4 class="text-primary">{{ result.stats.edge_count }}</h4>
+                            <p class="mb-0 text-muted">连接数量</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card">
+                            <h4 class="text-primary">¥{{ "%.0f"|format(result.stats.total_amount) }}</h4>
+                            <p class="mb-0 text-muted">总交易金额</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-card">
+                            <h4 class="text-primary">¥{{ "%.0f"|format(result.stats.avg_amount) }}</h4>
+                            <p class="mb-0 text-muted">平均交易金额</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 借贷统计 -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="stat-card" style="border-left-color: #FF6B6B;">
+                            <h5 class="text-danger">资金流出(借)</h5>
+                            <p class="mb-1">总金额: ¥{{ "%.0f"|format(result.stats.borrow_stats.total) }}</p>
+                            <p class="mb-1">交易次数: {{ result.stats.borrow_stats.count }}</p>
+                            <p class="mb-0">平均金额: ¥{{ "%.0f"|format(result.stats.borrow_stats.avg) }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stat-card" style="border-left-color: #51CF66;">
+                            <h5 class="text-success">资金流入(贷)</h5>
+                            <p class="mb-1">总金额: ¥{{ "%.0f"|format(result.stats.lend_stats.total) }}</p>
+                            <p class="mb-1">交易次数: {{ result.stats.lend_stats.count }}</p>
+                            <p class="mb-0">平均金额: ¥{{ "%.0f"|format(result.stats.lend_stats.avg) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图例说明 -->
+            <div class="result-card">
+                <h4><i class="fas fa-info-circle me-2 text-primary"></i>图例说明</h4>
+                <div class="legend-box">
+                    <div class="text-center">
+                        <div class="legend-item legend-borrow">
+                            <i class="fas fa-arrow-right me-2"></i>资金流出(借)
+                        </div>
+                        <div class="legend-item legend-lend">
+                            <i class="fas fa-arrow-left me-2"></i>资金流入(贷)
+                        </div>
+                        <div class="legend-item legend-neutral">
+                            <i class="fas fa-circle me-2"></i>中性节点
+                        </div>
+                    </div>
+                    <div class="mt-3 text-center text-muted">
+                        <small>
+                            <i class="fas fa-lightbulb me-2"></i>
+                            提示：红色箭头表示资金流出方向，绿色箭头表示资金流入方向。节点大小和连线粗细反映交易金额大小。
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 网络图显示 -->
+            <div class="result-card">
+                <h3><i class="fas fa-project-diagram me-2 text-primary"></i>资金流向网络图</h3>
+                <div class="network-container">
+                    <iframe src="{{ url_for('static', filename='networks/' + result.html_file) }}" 
+                            class="network-iframe"></iframe>
+                </div>
+            </div>
+
+            <!-- TOP账户统计 -->
+            <div class="result-card">
+                <h3><i class="fas fa-crown me-2 text-primary"></i>TOP 10 核心账户</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>排名</th>
+                                <th>账户名称</th>
+                                <th>总交易金额</th>
+                                <th>交易次数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for account_name, data in result.stats.top_accounts.items() %}
+                            <tr>
+                                <td><span class="badge bg-primary">{{ loop.index }}</span></td>
+                                <td><strong>{{ account_name }}</strong></td>
+                                <td class="text-success">¥{{ "%.0f"|format(data['交易金额']) }}</td>
+                                <td>{{ data['交易次数'] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 网络深度分析 -->
+            {% if result.network_analysis %}
+            <div class="result-card">
+                <h3><i class="fas fa-microscope me-2 text-primary"></i>网络深度分析</h3>
+                
+                <!-- 网络基本指标 -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <h5 class="text-info">{{ result.network_analysis.connected_components_count }}</h5>
+                            <p class="mb-0 text-muted">连通分量数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <h5 class="text-info">{{ "%.4f"|format(result.network_analysis.density) }}</h5>
+                            <p class="mb-0 text-muted">网络密度</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <h5 class="text-info">{{ "%.4f"|format(result.network_analysis.clustering.average) if result.network_analysis.clustering else "N/A" }}</h5>
+                            <p class="mb-0 text-muted">平均聚类系数</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <h5 class="text-info">{{ result.network_analysis.communities|length if result.network_analysis.communities else 0 }}</h5>
+                            <p class="mb-0 text-muted">社区数量</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 度中心性分析 -->
+                {% if result.network_analysis.degree_centrality_top10 %}
+                <div class="mb-4">
+                    <h5><i class="fas fa-chart-line me-2"></i>度中心性TOP10</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>排名</th>
+                                    <th>节点</th>
+                                    <th>度中心性</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for node, centrality in result.network_analysis.degree_centrality_top10 %}
+                                <tr>
+                                    <td><span class="badge bg-info">{{ loop.index }}</span></td>
+                                    <td>{{ node[:20] }}{{ '...' if node|length > 20 else '' }}</td>
+                                    <td>{{ "%.4f"|format(centrality) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 介数中心性分析 -->
+                {% if result.network_analysis.betweenness_centrality_top10 %}
+                <div class="mb-4">
+                    <h5><i class="fas fa-route me-2"></i>介数中心性TOP10</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>排名</th>
+                                    <th>节点</th>
+                                    <th>介数中心性</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for node, centrality in result.network_analysis.betweenness_centrality_top10 %}
+                                <tr>
+                                    <td><span class="badge bg-warning">{{ loop.index }}</span></td>
+                                    <td>{{ node[:20] }}{{ '...' if node|length > 20 else '' }}</td>
+                                    <td>{{ "%.4f"|format(centrality) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 社区分析 -->
+                {% if result.network_analysis.communities %}
+                <div class="mb-4">
+                    <h5><i class="fas fa-users me-2"></i>社区分析</h5>
+                    <div class="row">
+                        {% for community in result.network_analysis.communities[:6] %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <span class="badge bg-success">社区 {{ community.id }}</span>
+                                        <small class="text-muted ms-2">{{ community.size }} 个节点</small>
+                                    </h6>
+                                    <div class="small">
+                                        {% for node in community.nodes %}
+                                            <span class="badge bg-light text-dark me-1 mb-1">{{ node[:15] }}{{ '...' if node|length > 15 else '' }}</span>
+                                        {% endfor %}
+                                        {% if community.size > community.nodes|length %}
+                                            <span class="text-muted">...还有{{ community.size - community.nodes|length }}个节点</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            <div class="result-card">
+                <h3><i class="fas fa-handshake me-2 text-primary"></i>TOP 10 活跃交易对手</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>排名</th>
+                                <th>交易对手</th>
+                                <th>总交易金额</th>
+                                <th>交易次数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for counterparty_name, data in result.stats.top_counterparties.items() %}
+                            <tr>
+                                <td><span class="badge bg-primary">{{ loop.index }}</span></td>
+                                <td><strong>{{ counterparty_name }}</strong></td>
+                                <td class="text-success">¥{{ "%.0f"|format(data['交易金额']) }}</td>
+                                <td>{{ data['交易次数'] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 下载区域 -->
+            <div class="result-card">
+                <div class="download-section">
+                    <h3><i class="fas fa-download me-2"></i>下载网络图</h3>
+                    <p class="text-muted mb-4">获取完整的网络图HTML文件</p>
+                    <div>
+                        <a href="{{ url_for('static', filename='networks/' + result.html_file) }}" 
+                           download class="btn-download">
+                            <i class="fas fa-file-code me-2"></i>下载网络图HTML
+                        </a>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>分析新文件
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

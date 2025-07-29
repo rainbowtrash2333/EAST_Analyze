@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>银行流水分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        .main-container {
+            margin-top: 50px;
+        }
+        .upload-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 50px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.1);
+        }
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+        }
+        .feature-list {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .feature-item {
+            margin: 10px 0;
+            color: #333;
+        }
+        .feature-item i {
+            color: #667eea;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center main-container">
+            <div class="col-md-8">
+                <div class="upload-card">
+                    <div class="text-center mb-4">
+                        <h1 class="display-4 text-primary mb-3">
+                            <i class="fas fa-chart-line me-3"></i>银行流水分析系统
+                        </h1>
+                        <p class="lead text-muted">上传Excel格式的银行流水文件，获得专业的数据分析报告和资金流向网络图</p>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert {% if category == 'error' %}alert-danger{% elif category == 'success' %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                                    {% if category == 'error' %}
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {% elif category == 'success' %}
+                                        <i class="fas fa-check-circle me-2"></i>
+                                    {% else %}
+                                        <i class="fas fa-info-circle me-2"></i>
+                                    {% endif %}
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- 分析类型选择 -->
+                    <div class="text-center mb-4">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="analysisType" id="flowAnalysis" value="flow" checked>
+                            <label class="btn btn-outline-primary" for="flowAnalysis">
+                                <i class="fas fa-chart-bar me-2"></i>流水分析
+                            </label>
+
+                            <input type="radio" class="btn-check" name="analysisType" id="networkAnalysis" value="network">
+                            <label class="btn btn-outline-primary" for="networkAnalysis">
+                                <i class="fas fa-project-diagram me-2"></i>网络图分析
+                            </label>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted" id="analysisDescription">
+                                分析单个Excel文件的交易数据，生成统计图表和报告
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- 流水分析表单 -->
+                    <form action="/upload" method="post" enctype="multipart/form-data" id="flowAnalysisForm">
+                        <div class="upload-area" id="flowUploadArea">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h4 class="mb-3">上传单个Excel文件</h4>
+                            <p class="text-muted mb-4">支持 .xlsx 和 .xls 格式的Excel文件</p>
+                            <input type="file" name="file" id="flowFileInput" accept=".xlsx,.xls" class="d-none" required>
+                            <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('flowFileInput').click()">
+                                <i class="fas fa-file-excel me-2"></i>选择文件
+                            </button>
+                            <div id="flowFileName" class="mt-3 text-success" style="display: none;">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span id="flowFileNameText"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5" id="flowUploadBtn" disabled>
+                                <i class="fas fa-rocket me-2"></i>开始流水分析
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- 网络图分析表单 -->
+                    <form action="/upload_network" method="post" enctype="multipart/form-data" id="networkAnalysisForm" style="display: none;">
+                        <div class="upload-area" id="networkUploadArea">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h4 class="mb-3">上传多个Excel文件</h4>
+                            <p class="text-muted mb-4">支持同时上传多个 .xlsx 和 .xls 格式的Excel文件</p>
+                            <input type="file" name="files" id="networkFileInput" accept=".xlsx,.xls" class="d-none" multiple required>
+                            <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('networkFileInput').click()">
+                                <i class="fas fa-files me-2"></i>选择多个文件
+                            </button>
+                            <div id="networkFileName" class="mt-3 text-success" style="display: none;">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span id="networkFileNameText"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5" id="networkUploadBtn" disabled>
+                                <i class="fas fa-project-diagram me-2"></i>开始网络分析
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="feature-list">
+                        <h5 class="text-center mb-4">
+                            <i class="fas fa-star text-warning me-2"></i>功能特色
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-users"></i>交易对手分析
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-chart-bar"></i>交易类型统计
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-calendar-alt"></i>时间趋势分析
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-project-diagram"></i>资金流向网络图
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="fas fa-clock"></i>每小时交易分析
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-download"></i>Excel报告下载
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-image"></i>可视化图表展示
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-network-wired"></i>多文件网络分析
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 分析类型切换
+        const flowAnalysisForm = document.getElementById('flowAnalysisForm');
+        const networkAnalysisForm = document.getElementById('networkAnalysisForm');
+        const analysisDescription = document.getElementById('analysisDescription');
+        
+        document.getElementById('flowAnalysis').addEventListener('change', function() {
+            if (this.checked) {
+                flowAnalysisForm.style.display = 'block';
+                networkAnalysisForm.style.display = 'none';
+                analysisDescription.textContent = '分析单个Excel文件的交易数据，生成统计图表和报告';
+            }
+        });
+        
+        document.getElementById('networkAnalysis').addEventListener('change', function() {
+            if (this.checked) {
+                flowAnalysisForm.style.display = 'none';
+                networkAnalysisForm.style.display = 'block';
+                analysisDescription.textContent = '分析多个Excel文件，生成资金流向网络图，限制节点数不超过150个';
+            }
+        });
+
+        // 流水分析文件上传处理
+        const flowFileInput = document.getElementById('flowFileInput');
+        const flowFileName = document.getElementById('flowFileName');
+        const flowFileNameText = document.getElementById('flowFileNameText');
+        const flowUploadBtn = document.getElementById('flowUploadBtn');
+        const flowUploadArea = document.getElementById('flowUploadArea');
+
+        flowFileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                flowFileNameText.textContent = this.files[0].name;
+                flowFileName.style.display = 'block';
+                flowUploadBtn.disabled = false;
+            } else {
+                flowFileName.style.display = 'none';
+                flowUploadBtn.disabled = true;
+            }
+        });
+
+        // 网络分析文件上传处理
+        const networkFileInput = document.getElementById('networkFileInput');
+        const networkFileName = document.getElementById('networkFileName');
+        const networkFileNameText = document.getElementById('networkFileNameText');
+        const networkUploadBtn = document.getElementById('networkUploadBtn');
+        const networkUploadArea = document.getElementById('networkUploadArea');
+
+        networkFileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                const fileNames = Array.from(this.files).map(file => file.name);
+                networkFileNameText.textContent = `已选择 ${this.files.length} 个文件: ${fileNames.join(', ')}`;
+                networkFileName.style.display = 'block';
+                networkUploadBtn.disabled = false;
+            } else {
+                networkFileName.style.display = 'none';
+                networkUploadBtn.disabled = true;
+            }
+        });
+
+        // 拖拽上传功能 - 流水分析
+        flowUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('bg-light');
+        });
+
+        flowUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('bg-light');
+        });
+
+        flowUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('bg-light');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                    flowFileInput.files = files;
+                    flowFileNameText.textContent = file.name;
+                    flowFileName.style.display = 'block';
+                    flowUploadBtn.disabled = false;
+                } else {
+                    alert('请上传Excel格式的文件(.xlsx或.xls)');
+                }
+            }
+        });
+
+        // 拖拽上传功能 - 网络分析
+        networkUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('bg-light');
+        });
+
+        networkUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('bg-light');
+        });
+
+        networkUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('bg-light');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const validFiles = Array.from(files).filter(file => 
+                    file.name.endsWith('.xlsx') || file.name.endsWith('.xls')
+                );
+                if (validFiles.length > 0) {
+                    networkFileInput.files = files;
+                    const fileNames = validFiles.map(file => file.name);
+                    networkFileNameText.textContent = `已选择 ${validFiles.length} 个文件: ${fileNames.join(', ')}`;
+                    networkFileName.style.display = 'block';
+                    networkUploadBtn.disabled = false;
+                } else {
+                    alert('请上传Excel格式的文件(.xlsx或.xls)');
+                }
+            }
+        });
+
+        // 表单提交时显示加载状态
+        document.getElementById('flowAnalysisForm').addEventListener('submit', function() {
+            flowUploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>分析中...';
+            flowUploadBtn.disabled = true;
+        });
+
+        document.getElementById('networkAnalysisForm').addEventListener('submit', function() {
+            networkUploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>分析中...';
+            networkUploadBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>

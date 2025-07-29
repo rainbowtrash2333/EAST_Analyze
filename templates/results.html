@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析结果 - 银行流水分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        .main-container {
+            margin: 30px 0;
+        }
+        .result-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .header-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        .chart-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .chart-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 10px 0;
+        }
+        .download-section {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+        }
+        .btn-download {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            margin: 10px;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-download:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .badge-success {
+            background-color: #28a745 !important;
+        }
+        .badge-danger {
+            background-color: #dc3545 !important;
+        }
+        .badge-secondary {
+            background-color: #6c757d !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- 头部 -->
+            <div class="result-card header-card">
+                <h1><i class="fas fa-chart-line me-3"></i>分析结果</h1>
+                <p class="mb-0">文件：{{ result.filename }}</p>
+            </div>
+
+            <!-- 整体统计 -->
+            <div class="result-card">
+                <h3><i class="fas fa-calculator me-2 text-primary"></i>整体统计</h3>
+                <div class="row">
+                    {% for _, row in result.total_stats.iterrows() %}
+                    <div class="col-md-2 col-sm-4 col-6">
+                        <div class="stat-card">
+                            <h4 class="text-primary">{{ "%.2f"|format(row['数值']) if row['数值'] is number else row['数值'] }}</h4>
+                            <p class="mb-0 text-muted">{{ row['统计指标'] }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 主要分析图表 -->
+            <div class="result-card">
+                <h3><i class="fas fa-chart-bar me-2 text-primary"></i>主要分析图表</h3>
+                <div class="chart-container">
+                    {% for chart in result.chart_files %}
+                        {% if 'main_analysis' in chart %}
+                            <img src="{{ url_for('static', filename='charts/' + chart) }}" class="chart-img" alt="主要分析图表">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 每小时分析图表 -->
+            <div class="result-card">
+                <h3><i class="fas fa-clock me-2 text-primary"></i>每小时交易分析</h3>
+                <div class="chart-container">
+                    {% for chart in result.chart_files %}
+                        {% if 'hourly_analysis' in chart %}
+                            <img src="{{ url_for('static', filename='charts/' + chart) }}" class="chart-img" alt="每小时分析图表">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- TOP交易对手 -->
+            <div class="result-card">
+                <h3><i class="fas fa-users me-2 text-primary"></i>TOP 10 交易对手</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>排名</th>
+                                <th>对方户名</th>
+                                <th>交易次数</th>
+                                <th>总交易金额</th>
+                                <th>净方向</th>
+                                <th>总收入</th>
+                                <th>总支出</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in range(min(10, result.counterparty_stats|length)) %}
+                            {% set row = result.counterparty_stats.iloc[i] %}
+                            <tr>
+                                <td><span class="badge bg-primary">{{ i + 1 }}</span></td>
+                                <td><strong>{{ row['对方户名'] }}</strong></td>
+                                <td>{{ row['交易次数'] }}</td>
+                                <td class="{% if row['总交易金额'] > 0 %}text-success{% elif row['总交易金额'] < 0 %}text-danger{% endif %}">
+                                    ¥{{ "%.2f"|format(row['总交易金额']) }}
+                                </td>
+                                <td>
+                                    <span class="badge {% if row['净方向'] == '净收入' %}badge-success{% elif row['净方向'] == '净支出' %}badge-danger{% else %}badge-secondary{% endif %}">
+                                        {{ row['净方向'] }}
+                                    </span>
+                                </td>
+                                <td class="text-success">¥{{ "%.2f"|format(row['总收入']) }}</td>
+                                <td class="text-danger">¥{{ "%.2f"|format(row['总支出']) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 交易类型分析 -->
+            <div class="result-card">
+                <h3><i class="fas fa-tags me-2 text-primary"></i>交易类型分析</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>交易类型</th>
+                                <th>交易次数</th>
+                                <th>总金额</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for _, row in result.transaction_type_stats.iterrows() %}
+                            <tr>
+                                <td>{{ row['交易类型'] }}</td>
+                                <td>{{ row['交易次数'] }}</td>
+                                <td class="{% if row['总金额'] > 0 %}text-success{% elif row['总金额'] < 0 %}text-danger{% endif %}">
+                                    ¥{{ "%.2f"|format(row['总金额']) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 交易渠道分析 -->
+            <div class="result-card">
+                <h3><i class="fas fa-route me-2 text-primary"></i>交易渠道分析</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>交易渠道</th>
+                                <th>使用次数</th>
+                                <th>总金额</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for _, row in result.channel_stats.iterrows() %}
+                            <tr>
+                                <td>{{ row['交易渠道'] }}</td>
+                                <td>{{ row['交易次数'] }}</td>
+                                <td class="{% if row['总金额'] > 0 %}text-success{% elif row['总金额'] < 0 %}text-danger{% endif %}">
+                                    ¥{{ "%.2f"|format(row['总金额']) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 下载区域 -->
+            <div class="result-card">
+                <div class="download-section">
+                    <h3><i class="fas fa-download me-2"></i>下载报告</h3>
+                    <p class="text-muted mb-4">获取完整的分析报告和图表文件</p>
+                    <div>
+                        <a href="{{ url_for('download_file', filename=result.report_file) }}" class="btn-download">
+                            <i class="fas fa-file-excel me-2"></i>下载Excel报告
+                        </a>
+                        {% for chart in result.chart_files %}
+                        <a href="{{ url_for('static', filename='charts/' + chart) }}" download class="btn-download">
+                            <i class="fas fa-image me-2"></i>下载图表 {{ loop.index }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>分析新文件
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import networkx as nx
 from pyvis.network import Network
 import warnings
 from datetime import datetime
+from typing import Dict, List, Any, Optional, Set, Union
 try:
     from community import community_louvain
 except ImportError:
@@ -11,7 +12,7 @@ except ImportError:
 
 warnings.filterwarnings('ignore')
 
-def process_network_data(folder_path, output_filename):
+def process_network_data(folder_path: str, output_filename: str) -> Dict[str, Any]:
     """
     处理网络数据文件夹中的所有Excel文件，生成资金流向网络图
     限制节点数不超过150个
@@ -104,7 +105,7 @@ def process_network_data(folder_path, output_filename):
     except Exception as e:
         raise e
 
-def create_network_graph(grouped, all_parties):
+def create_network_graph(grouped: pd.DataFrame, all_parties: Set[str]) -> str:
     """
     创建网络图并返回HTML内容
     """
@@ -213,7 +214,7 @@ def create_network_graph(grouped, all_parties):
     
     return html_content
 
-def generate_network_stats(grouped, all_parties):
+def generate_network_stats(grouped: pd.DataFrame, all_parties: Set[str]) -> Dict[str, Any]:
     """
     生成网络统计数据
     """
@@ -261,7 +262,7 @@ def generate_network_stats(grouped, all_parties):
         'top_counterparties': counterparty_stats.to_dict('index')
     }
 
-def perform_network_analysis(df):
+def perform_network_analysis(df: pd.DataFrame) -> Optional[Dict[str, Any]]:
     """
     使用NetworkX进行深度网络分析
     """

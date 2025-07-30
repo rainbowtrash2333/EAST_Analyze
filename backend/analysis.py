@@ -9,6 +9,7 @@ import matplotlib.ticker as ticker
 import warnings
 from datetime import datetime
 import os
+from typing import Dict, List, Any, Tuple
 
 # 设置中文字体支持
 plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
@@ -16,7 +17,7 @@ plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['figure.figsize'] = (25, 10)
 warnings.filterwarnings('ignore')
 
-def process_transaction_data(file_path, filename):
+def process_transaction_data(file_path: str, filename: str) -> Dict[str, Any]:
     """
     处理银行流水数据并生成分析结果
     """
@@ -71,7 +72,7 @@ def process_transaction_data(file_path, filename):
         print(f'文件处理出现意外错误: {str(e)}')
         raise e
 
-def preprocess_data(df):
+def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     数据预处理
     """
@@ -93,7 +94,7 @@ def preprocess_data(df):
     
     return df
 
-def analyze_counterparties(df):
+def analyze_counterparties(df: pd.DataFrame) -> pd.DataFrame:
     """
     分析交易对手
     """
@@ -128,7 +129,7 @@ def analyze_counterparties(df):
     
     return counterparty_stats
 
-def calculate_total_stats(df):
+def calculate_total_stats(df: pd.DataFrame) -> pd.DataFrame:
     """
     计算整体统计
     """
@@ -144,7 +145,7 @@ def calculate_total_stats(df):
     })
     return total_stats
 
-def analyze_transaction_types(df):
+def analyze_transaction_types(df: pd.DataFrame) -> pd.DataFrame:
     """
     分析交易类型
     """
@@ -154,7 +155,7 @@ def analyze_transaction_types(df):
     ).reset_index().sort_values('交易次数', ascending=False)
     return transaction_type_stats
 
-def analyze_channels(df):
+def analyze_channels(df: pd.DataFrame) -> pd.DataFrame:
     """
     分析交易渠道
     """
@@ -164,7 +165,7 @@ def analyze_channels(df):
     ).reset_index().sort_values('交易次数', ascending=False)
     return channel_stats
 
-def analyze_daily_trends(df):
+def analyze_daily_trends(df: pd.DataFrame) -> pd.DataFrame:
     """
     分析每日交易趋势
     """
@@ -174,7 +175,7 @@ def analyze_daily_trends(df):
     ).reset_index()
     return daily_transactions
 
-def analyze_hourly_trends(df):
+def analyze_hourly_trends(df: pd.DataFrame) -> pd.DataFrame:
     """
     分析每小时交易趋势
     """
@@ -194,8 +195,9 @@ def analyze_hourly_trends(df):
     
     return hourly_stats
 
-def generate_charts(df, counterparty_stats, transaction_type_stats, channel_stats, 
-                   daily_transactions, hourly_stats, filename):
+def generate_charts(df: pd.DataFrame, counterparty_stats: pd.DataFrame, transaction_type_stats: pd.DataFrame, 
+                   channel_stats: pd.DataFrame, daily_transactions: pd.DataFrame, 
+                   hourly_stats: pd.DataFrame, filename: str) -> List[str]:
     """
     生成所有图表
     """
@@ -292,8 +294,10 @@ def generate_charts(df, counterparty_stats, transaction_type_stats, channel_stat
     
     return chart_files
 
-def generate_excel_report(counterparty_stats, total_stats, transaction_type_stats, 
-                         channel_stats, daily_transactions, hourly_stats, filename):
+def generate_excel_report(counterparty_stats: pd.DataFrame, total_stats: pd.DataFrame, 
+                         transaction_type_stats: pd.DataFrame, channel_stats: pd.DataFrame, 
+                         daily_transactions: pd.DataFrame, hourly_stats: pd.DataFrame, 
+                         filename: str) -> str:
     """
     生成Excel报告
     """

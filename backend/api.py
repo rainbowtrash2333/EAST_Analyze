@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 from analysis import process_transaction_data
 from network_analysis import process_network_data
 import secrets
+from typing import Dict, Any, List, Tuple, Optional
 
 app = Flask(__name__)
 CORS(app)  # 允许跨域请求
@@ -27,16 +28,16 @@ warnings.filterwarnings('ignore')
 
 ALLOWED_EXTENSIONS = {'xlsx', 'xls'}
 
-def allowed_file(filename):
+def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/api/health', methods=['GET'])
-def health_check():
+def health_check() -> Dict[str, str]:
     """健康检查接口"""
     return jsonify({'status': 'ok', 'message': '后端API服务正常运行'})
 
 @app.route('/api/upload', methods=['POST'])
-def upload_file():
+def upload_file() -> Tuple[Dict[str, Any], int]:
     """流水分析文件上传接口"""
     try:
         # 检查是否有文件上传
@@ -114,7 +115,7 @@ def upload_file():
         return jsonify({'error': f'系统错误: {str(e)}'}), 500
 
 @app.route('/api/upload_network', methods=['POST'])
-def upload_network_files():
+def upload_network_files() -> Tuple[Dict[str, Any], int]:
     """网络分析文件上传接口"""
     try:
         # 检查是否有文件上传
@@ -177,7 +178,7 @@ def upload_network_files():
         return jsonify({'error': f'系统错误: {str(e)}'}), 500
 
 @app.route('/api/download/<filename>')
-def download_file(filename):
+def download_file(filename: str):
     """文件下载接口"""
     try:
         file_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
@@ -189,7 +190,7 @@ def download_file(filename):
         return jsonify({'error': f'文件下载失败: {str(e)}'}), 500
 
 @app.route('/api/charts/<filename>')
-def get_chart(filename):
+def get_chart(filename: str):
     """获取图表文件"""
     try:
         file_path = os.path.join('static/charts', filename)
@@ -201,7 +202,7 @@ def get_chart(filename):
         return jsonify({'error': f'图表获取失败: {str(e)}'}), 500
 
 @app.route('/api/networks/<filename>')
-def get_network(filename):
+def get_network(filename: str):
     """获取网络图文件"""
     try:
         file_path = os.path.join('static/networks', filename)
@@ -213,15 +214,15 @@ def get_network(filename):
         return jsonify({'error': f'网络图获取失败: {str(e)}'}), 500
 
 @app.errorhandler(404)
-def api_not_found(e):
+def api_not_found(e) -> Tuple[Dict[str, str], int]:
     return jsonify({'error': 'API接口不存在'}), 404
 
 @app.errorhandler(500)
-def api_internal_error(e):
+def api_internal_error(e) -> Tuple[Dict[str, str], int]:
     return jsonify({'error': '服务器内部错误，请重试'}), 500
 
 @app.errorhandler(413)
-def api_file_too_large(e):
+def api_file_too_large(e) -> Tuple[Dict[str, str], int]:
     return jsonify({'error': '文件过大，请上传小于16MB的文件'}), 413
 
 if __name__ == '__main__':

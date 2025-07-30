@@ -36,11 +36,11 @@ def process_network_data(folder_path, output_filename):
         filtered_df = full_df.dropna(subset=['对方户名'])
         
         # 只保留借贷标志为"借"或"贷"的记录
-        filtered_df = filtered_df[filtered_df['借贷标志'].isin(['借', '贷'])]
+        filtered_df = filtered_df[filtered_df['交易借贷标志'].isin(['借', '贷'])]
         
         # 3. 数据分组聚合
         limited = 200000  # 最低交易金额限制
-        grouped = filtered_df.groupby(['账户名称', '借贷标志', '对方户名'])['交易金额'].sum().reset_index()
+        grouped = filtered_df.groupby(['账户名称', '交易借贷标志', '对方户名'])['交易金额'].sum().reset_index()
         grouped = grouped[grouped['交易金额'] >= limited]
         
         # 4. 限制节点数量不超过150个
@@ -70,7 +70,6 @@ def process_network_data(folder_path, output_filename):
         
         # 5. 创建网络图
         network_html = create_network_graph(grouped, all_parties)
-        
         # 6. 保存HTML文件
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         html_filename = f"{timestamp}_{output_filename}_network.html"
@@ -137,7 +136,7 @@ def create_network_graph(grouped, all_parties):
     for _, row in grouped.iterrows():
         source_name = row['账户名称']
         target_name = row['对方户名']
-        direction = row['借贷标志']
+        direction = row['交易借贷标志']
         
         # 确定方向
         if direction == '借':
@@ -223,11 +222,11 @@ def generate_network_stats(grouped, all_parties):
     avg_amount = grouped['交易金额'].mean()
     
     # 按借贷标志统计
-    borrow_stats = grouped[grouped['借贷标志'] == '借'].agg({
+    borrow_stats = grouped[grouped['交易借贷标志'] == '借'].agg({
         '交易金额': ['sum', 'count', 'mean']
     }).round(2)
     
-    lend_stats = grouped[grouped['借贷标志'] == '贷'].agg({
+    lend_stats = grouped[grouped['交易借贷标志'] == '贷'].agg({
         '交易金额': ['sum', 'count', 'mean']
     }).round(2)
     
@@ -242,21 +241,21 @@ def generate_network_stats(grouped, all_parties):
         '交易金额': 'sum',
         '账户名称': 'count'
     }).rename(columns={'账户名称': '交易次数'}).sort_values('交易金额', ascending=False).head(10)
-    
+   
     return {
         'total_amount': total_amount,
         'avg_amount': avg_amount,
         'node_count': len(all_parties),
         'edge_count': len(grouped),
         'borrow_stats': {
-            'total': float(borrow_stats[('交易金额', 'sum')]) if not borrow_stats.empty else 0,
-            'count': int(borrow_stats[('交易金额', 'count')]) if not borrow_stats.empty else 0,
-            'avg': float(borrow_stats[('交易金额', 'mean')]) if not borrow_stats.empty else 0
+            'total': float(borrow_stats.loc['sum', '交易金额']) if not borrow_stats.empty else 0,
+            'count': int(borrow_stats.loc['count', '交易金额']) if not borrow_stats.empty else 0,
+            'avg': float(borrow_stats.loc['mean', '交易金额']) if not borrow_stats.empty else 0
         },
         'lend_stats': {
-            'total': float(lend_stats[('交易金额', 'sum')]) if not lend_stats.empty else 0,
-            'count': int(lend_stats[('交易金额', 'count')]) if not lend_stats.empty else 0,
-            'avg': float(lend_stats[('交易金额', 'mean')]) if not lend_stats.empty else 0
+            'total': float(lend_stats.loc['sum', '交易金额']) if not lend_stats.empty else 0,
+            'count': int(lend_stats.loc['count', '交易金额']) if not lend_stats.empty else 0,
+            'avg': float(lend_stats.loc['mean', '交易金额']) if not lend_stats.empty else 0
         },
         'top_accounts': account_stats.to_dict('index'),
         'top_counterparties': counterparty_stats.to_dict('index')
@@ -283,9 +282,9 @@ def perform_network_analysis(df):
             if pd.isna(row['证件号码']) or pd.isna(row['对方户名']):
                 continue
                 
-            if row['借贷标志'] == '借':  # 借：资金流入，边从"对方户名"到"证件号码"
+            if row['交易借贷标志'] == '借':  # 借：资金流入，边从"对方户名"到"证件号码"
                 G.add_edge(row['对方户名'], row['证件号码'], weight=row['交易金额'])
-            elif row['借贷标志'] == '贷':  # 贷：资金流出，边从"证件号码"到"对方户名"
+            elif row['交易借贷标志'] == '贷':  # 贷：资金流出，边从"证件号码"到"对方户名"
                 G.add_edge(row['证件号码'], row['对方户名'], weight=row['交易金额'])
         
         # 如果图为空，返回None
@@ -361,3 +360,4 @@ def perform_network_analysis(df):
     except Exception as e:
         print(f"网络分析出现错误: {e}")
         return None
+        

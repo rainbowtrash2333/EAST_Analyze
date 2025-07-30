@@ -91,45 +91,30 @@
             <!-- 头部 -->
             <div class="result-card header-card">
                 <h1><i class="fas fa-chart-line me-3"></i>分析结果</h1>
-                <p class="mb-0">文件：{{ result.filename }}</p>
+                <p class="mb-0" id="filename-display">文件：</p>
             </div>
 
             <!-- 整体统计 -->
             <div class="result-card">
                 <h3><i class="fas fa-calculator me-2 text-primary"></i>整体统计</h3>
-                <div class="row">
-                    {% for _, row in result.total_stats.iterrows() %}
-                    <div class="col-md-2 col-sm-4 col-6">
-                        <div class="stat-card">
-                            <h4 class="text-primary">{{ "%.2f"|format(row['数值']) if row['数值'] is number else row['数值'] }}</h4>
-                            <p class="mb-0 text-muted">{{ row['统计指标'] }}</p>
-                        </div>
-                    </div>
-                    {% endfor %}
+                <div class="row" id="total-stats-container">
+                    <!-- 统计数据将通过JavaScript动态加载 -->
                 </div>
             </div>
 
             <!-- 主要分析图表 -->
             <div class="result-card">
                 <h3><i class="fas fa-chart-bar me-2 text-primary"></i>主要分析图表</h3>
-                <div class="chart-container">
-                    {% for chart in result.chart_files %}
-                        {% if 'main_analysis' in chart %}
-                            <img src="{{ url_for('static', filename='charts/' + chart) }}" class="chart-img" alt="主要分析图表">
-                        {% endif %}
-                    {% endfor %}
+                <div class="chart-container" id="main-charts-container">
+                    <!-- 图表将通过JavaScript动态加载 -->
                 </div>
             </div>
 
             <!-- 每小时分析图表 -->
             <div class="result-card">
                 <h3><i class="fas fa-clock me-2 text-primary"></i>每小时交易分析</h3>
-                <div class="chart-container">
-                    {% for chart in result.chart_files %}
-                        {% if 'hourly_analysis' in chart %}
-                            <img src="{{ url_for('static', filename='charts/' + chart) }}" class="chart-img" alt="每小时分析图表">
-                        {% endif %}
-                    {% endfor %}
+                <div class="chart-container" id="hourly-charts-container">
+                    <!-- 图表将通过JavaScript动态加载 -->
                 </div>
             </div>
 
@@ -149,25 +134,8 @@
                                 <th>总支出</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for i in range(min(10, result.counterparty_stats|length)) %}
-                            {% set row = result.counterparty_stats.iloc[i] %}
-                            <tr>
-                                <td><span class="badge bg-primary">{{ i + 1 }}</span></td>
-                                <td><strong>{{ row['对方户名'] }}</strong></td>
-                                <td>{{ row['交易次数'] }}</td>
-                                <td class="{% if row['总交易金额'] > 0 %}text-success{% elif row['总交易金额'] < 0 %}text-danger{% endif %}">
-                                    ¥{{ "%.2f"|format(row['总交易金额']) }}
-                                </td>
-                                <td>
-                                    <span class="badge {% if row['净方向'] == '净收入' %}badge-success{% elif row['净方向'] == '净支出' %}badge-danger{% else %}badge-secondary{% endif %}">
-                                        {{ row['净方向'] }}
-                                    </span>
-                                </td>
-                                <td class="text-success">¥{{ "%.2f"|format(row['总收入']) }}</td>
-                                <td class="text-danger">¥{{ "%.2f"|format(row['总支出']) }}</td>
-                            </tr>
-                            {% endfor %}
+                        <tbody id="counterparty-table">
+                            <!-- 数据将通过JavaScript动态加载 -->
                         </tbody>
                     </table>
                 </div>
@@ -185,16 +153,8 @@
                                 <th>总金额</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for _, row in result.transaction_type_stats.iterrows() %}
-                            <tr>
-                                <td>{{ row['交易类型'] }}</td>
-                                <td>{{ row['交易次数'] }}</td>
-                                <td class="{% if row['总金额'] > 0 %}text-success{% elif row['总金额'] < 0 %}text-danger{% endif %}">
-                                    ¥{{ "%.2f"|format(row['总金额']) }}
-                                </td>
-                            </tr>
-                            {% endfor %}
+                        <tbody id="transaction-type-table">
+                            <!-- 数据将通过JavaScript动态加载 -->
                         </tbody>
                     </table>
                 </div>
@@ -212,16 +172,8 @@
                                 <th>总金额</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for _, row in result.channel_stats.iterrows() %}
-                            <tr>
-                                <td>{{ row['交易渠道'] }}</td>
-                                <td>{{ row['交易次数'] }}</td>
-                                <td class="{% if row['总金额'] > 0 %}text-success{% elif row['总金额'] < 0 %}text-danger{% endif %}">
-                                    ¥{{ "%.2f"|format(row['总金额']) }}
-                                </td>
-                            </tr>
-                            {% endfor %}
+                        <tbody id="channel-table">
+                            <!-- 数据将通过JavaScript动态加载 -->
                         </tbody>
                     </table>
                 </div>
@@ -232,18 +184,11 @@
                 <div class="download-section">
                     <h3><i class="fas fa-download me-2"></i>下载报告</h3>
                     <p class="text-muted mb-4">获取完整的分析报告和图表文件</p>
-                    <div>
-                        <a href="{{ url_for('download_file', filename=result.report_file) }}" class="btn-download">
-                            <i class="fas fa-file-excel me-2"></i>下载Excel报告
-                        </a>
-                        {% for chart in result.chart_files %}
-                        <a href="{{ url_for('static', filename='charts/' + chart) }}" download class="btn-download">
-                            <i class="fas fa-image me-2"></i>下载图表 {{ loop.index }}
-                        </a>
-                        {% endfor %}
+                    <div id="download-links">
+                        <!-- 下载链接将通过JavaScript动态生成 -->
                     </div>
                     <div class="mt-4">
-                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-lg">
+                        <a href="index.html" class="btn btn-outline-primary btn-lg">
                             <i class="fas fa-plus me-2"></i>分析新文件
                         </a>
                     </div>
@@ -253,5 +198,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/results.js"></script>
 </body>
 </html>

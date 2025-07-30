@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # 强制使用非交互式后端
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.font_manager import FontProperties, fontManager
@@ -309,8 +311,3 @@ def generate_excel_report(counterparty_stats, total_stats, transaction_type_stat
     
     return report_file
     
-if __name__ == '__main__':
-    file_path = r'uploads\20250729_113709_-.xlsx'
-    filename = '-.xlsx'
-    result = process_transaction_data(file_path, filename)
-    print(result)

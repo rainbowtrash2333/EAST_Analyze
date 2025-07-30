@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网络图分析结果 - 银行流水分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        .main-container {
+            margin: 30px 0;
+        }
+        .result-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .header-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        .network-iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .btn-back {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            color: white;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- 头部 -->
+            <div class="result-card header-card">
+                <h1><i class="fas fa-project-diagram me-3"></i>网络图分析结果</h1>
+                <p class="mb-0" id="filename-display">分析文件：</p>
+            </div>
+
+            <!-- 网络统计 -->
+            <div class="result-card">
+                <h3><i class="fas fa-chart-pie me-2 text-primary"></i>网络统计</h3>
+                <div class="row" id="network-stats-container">
+                    <!-- 统计数据将通过JavaScript动态加载 -->
+                </div>
+            </div>
+
+            <!-- 网络图显示 -->
+            <div class="result-card">
+                <h3><i class="fas fa-network-wired me-2 text-primary"></i>资金流向网络图</h3>
+                <div class="text-center mb-3">
+                    <p class="text-muted">
+                        <i class="fas fa-info-circle me-2"></i>
+                        红色箭头表示资金流出，绿色箭头表示资金流入。点击节点可查看详细信息。
+                    </p>
+                </div>
+                <iframe id="network-iframe" class="network-iframe"></iframe>
+            </div>
+
+            <!-- TOP账户统计 -->
+            <div class="result-card" id="top-accounts-section">
+                <h3><i class="fas fa-user-friends me-2 text-primary"></i>TOP 10 账户</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>排名</th>
+                                <th>账户名称</th>
+                                <th>交易金额</th>
+                                <th>交易次数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-accounts-table">
+                            <!-- 数据将通过JavaScript动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TOP交易对手统计 -->
+            <div class="result-card" id="top-counterparties-section">
+                <h3><i class="fas fa-handshake me-2 text-primary"></i>TOP 10 交易对手</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>排名</th>
+                                <th>交易对手</th>
+                                <th>交易金额</th>
+                                <th>交易次数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-counterparties-table">
+                            <!-- 数据将通过JavaScript动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 网络分析详情 -->
+            <div class="result-card" id="network-analysis-section" style="display: none;">
+                <h3><i class="fas fa-brain me-2 text-primary"></i>深度网络分析</h3>
+                <div id="network-analysis-content">
+                    <!-- 网络分析数据将通过JavaScript动态加载 -->
+                </div>
+            </div>
+
+            <!-- 返回按钮 -->
+            <div class="result-card">
+                <div class="text-center">
+                    <a href="index.html" class="btn-back">
+                        <i class="fas fa-arrow-left me-2"></i>返回上传页面
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/network-results.js"></script>
+</body>
+</html>

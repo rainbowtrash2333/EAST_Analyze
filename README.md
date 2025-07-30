@@ -1,6 +1,87 @@
-# 银行流水分析系统
+# 银行流水分析系统 - 前后端分离版本
 
-一个基于Flask的Web应用程序，用于分析银行流水数据并生成可视化报告和资金流向网络图。
+本项目已成功改造为前后端分离架构，提供更好的可维护性和扩展性。
+
+## 项目结构
+
+```
+EAST_Analyze/
+├── backend/                    # 后端API服务
+│   ├── api.py                  # Flask API服务器
+│   ├── analysis.py             # 数据分析模块
+│   ├── network_analysis.py     # 网络分析模块
+│   ├── requirements.txt        # Python依赖
+│   └── README.md              # 后端文档
+├── frontend/                   # 前端Web应用
+│   ├── index.html             # 主页面
+│   ├── results.html           # 流水分析结果页
+│   ├── network-results.html   # 网络分析结果页
+│   ├── js/                    # JavaScript文件
+│   │   ├── app.js
+│   │   ├── results.js
+│   │   └── network-results.js
+│   └── README.md              # 前端文档
+├── static/                     # 静态文件（图表、网络图）
+├── uploads/                    # 文件上传目录
+├── outputs/                    # 输出文件目录
+├── app.py                     # 原始Flask应用（兼容性保留）
+├── analysis.py                # 原始分析模块（兼容性保留）
+├── network_analysis.py        # 原始网络分析模块（兼容性保留）
+├── templates/                 # 原始模板（兼容性保留）
+└── README.md                  # 项目总体文档
+```
+
+## 架构特点
+
+### 后端 (Flask API)
+- **RESTful API设计**：所有接口返回JSON格式数据
+- **CORS支持**：允许跨域请求，支持前后端分离部署
+- **健康检查**：提供 `/api/health` 接口检查服务状态
+- **文件处理**：支持单文件和多文件上传
+- **错误处理**：统一的错误响应格式
+
+### 前端 (纯静态Web应用)
+- **响应式设计**：基于Bootstrap 5的现代化界面
+- **异步通信**：使用Fetch API与后端交互
+- **状态管理**：使用sessionStorage管理分析结果
+- **错误处理**：友好的错误提示和状态反馈
+
+## 快速开始
+
+### 方式一：前后端分离部署（推荐）
+
+#### 1. 启动后端服务
+```bash
+cd backend
+pip install -r requirements.txt
+python api.py
+```
+后端服务将在 http://localhost:5000 启动
+
+#### 2. 启动前端服务
+可以使用任何Web服务器托管前端文件，例如：
+
+**使用Python内置服务器：**
+```bash
+cd frontend
+python -m http.server 8080
+```
+
+**使用Node.js http-server：**
+```bash
+cd frontend
+npx http-server -p 8080
+```
+
+前端应用将在 http://localhost:8080 可访问
+
+### 方式二：传统整体部署（兼容）
+
+```bash
+pip install -r requirements.txt
+python app.py
+```
+应用将在 http://localhost:5000 启动
 
 ## 功能特色
 
@@ -19,152 +100,83 @@
 - 📊 **网络统计分析** - 提供节点数、连接数、核心账户等统计信息
 - 🔬 **深度网络分析** - 度中心性、介数中心性、社区检测、聚类系数分析
 - 🏘️ **社区发现** - 自动识别资金流动的社区结构
-- 💾 **文件下载** - 支持下载完整的HTML网络图文件
 
-## 系统要求
+## API接口
 
-- Python 3.7+
-- Flask 2.3+
-- pandas, matplotlib, seaborn, pyvis, networkx, python-louvain 等数据分析库
+### 基础接口
+- `GET /api/health` - 健康检查
+- `POST /api/upload` - 单文件流水分析
+- `POST /api/upload_network` - 多文件网络分析
 
-## 安装步骤
-
-1. 克隆或下载项目到本地
-2. 安装依赖包：
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. 运行Flask应用：
-   ```bash
-   python app.py
-   ```
-4. 在浏览器中访问 `http://localhost:5000`
-
-## 使用方法
-
-### 流水分析模式
-1. 在主页选择"流水分析"选项
-2. 上传单个Excel文件
-3. 查看详细的统计结果和可视化图表
-4. 下载Excel报告和PNG格式的图表文件
-
-### 网络图分析模式
-1. 在主页选择"网络图分析"选项
-2. 同时上传多个Excel文件（包含交易数据）
-3. 查看交互式的资金流向网络图
-4. 下载HTML格式的网络图文件
+### 文件接口  
+- `GET /api/download/<filename>` - 下载Excel报告
+- `GET /api/charts/<filename>` - 获取分析图表
+- `GET /api/networks/<filename>` - 获取网络图
 
 ## 文件格式要求
 
 ### 流水分析文件格式
-上传的Excel文件需要包含以下列：
-- 交易借贷标志
-- 交易金额  
-- 对方户名
-- 对方账号
-- 对方行名
-- 现转标志
-- 交易类型
-- 交易渠道
-- 核心交易日期
-- 核心交易时间
+Excel文件需要包含以下列：
+- 交易借贷标志、交易金额、对方户名、对方账号、对方行名
+- 现转标志、交易类型、交易渠道、核心交易日期、核心交易时间
 
 ### 网络图分析文件格式
-上传的Excel文件需要包含以下列：
-- 账户名称
-- 借贷标志
-- 对方户名
-- 交易金额
+Excel文件需要包含以下列：
+- 账户名称、借贷标志、对方户名、交易金额
+- 可选：证件号码（用于深度网络分析）
 
-**可选列（用于深度网络分析）：**
-- 证件号码（用于更精确的网络节点识别）
+## 主要改进
 
-**注意**：如果文件包含证件号码列，系统将进行更深入的网络分析，包括度中心性、介数中心性、社区检测等高级分析。
+1. **架构分离**：前端和后端完全独立，可分别部署和扩展
+2. **API优化**：统一的JSON响应格式，更好的错误处理
+3. **用户体验**：异步加载，实时状态反馈，更好的错误提示
+4. **可维护性**：代码组织更清晰，职责分离明确
+5. **扩展性**：支持独立部署，方便后续功能扩展
+6. **兼容性**：保留原有代码结构，支持传统部署方式
 
-## 项目结构
+## 部署建议
 
-```
-EAST_Analyze/
-├── app.py                  # Flask主应用文件
-├── analysis.py             # 流水分析模块
-├── network_analysis.py     # 网络图分析模块
-├── requirements.txt        # 依赖包列表
-├── templates/              # HTML模板
-│   ├── index.html          # 主页模板
-│   ├── results.html        # 流水分析结果页面
-│   └── network_results.html # 网络图分析结果页面
-├── static/                 # 静态文件
-│   ├── charts/             # 生成的图表存储
-│   └── networks/           # 生成的网络图存储
-├── uploads/                # 上传文件临时存储
-├── outputs/                # 生成的报告文件
-└── jupyter/                # 原始Jupyter notebook
-    ├── 流水分析.ipynb
-    └── 画图.ipynb
-```
+### 开发环境
+- 后端：直接运行Python脚本
+- 前端：使用开发服务器托管静态文件
+
+### 生产环境
+- 后端：使用Gunicorn + Nginx部署Flask应用
+- 前端：使用Nginx托管静态文件
+- 数据库：考虑添加Redis缓存和数据库存储
 
 ## 技术栈
 
-- **后端**: Flask, pandas, numpy, matplotlib, seaborn, pyvis, networkx
-- **前端**: Bootstrap 5, HTML5, JavaScript
-- **数据处理**: openpyxl, xlrd
-- **可视化**: matplotlib, seaborn, pyvis
-- **网络分析**: networkx, python-louvain (社区检测)
-
-## 特殊功能说明
-
-### 网络图节点限制
-- 系统自动限制网络图节点数不超过150个
-- 当节点数超过限制时，系统会按交易金额排序，保留最重要的150个节点
-- 这确保了网络图的可读性和性能
-
-### 深度网络分析
-- **度中心性分析**: 识别网络中连接最多的关键节点
-- **介数中心性分析**: 发现在信息传播中起关键作用的中介节点
-- **社区检测**: 使用Louvain算法自动识别资金流动的社区结构
-- **聚类系数**: 衡量网络的局部聚集特性
-- **连通分量分析**: 识别网络中相互连接的组件
-
-### 交互式网络图
-- 支持节点拖拽移动
-- 鼠标悬停显示详细信息
-- 动态物理引擎布局
-- 缩放和平移功能
+- **后端**：Python + Flask + pandas + matplotlib + networkx
+- **前端**：HTML5 + CSS3 + JavaScript (ES6+) + Bootstrap 5
+- **通信**：RESTful API + JSON
+- **可视化**：matplotlib (后端) + 动态图表展示 (前端)
 
 ## 注意事项
 
-- 流水分析支持的文件格式：.xlsx, .xls（单个文件）
-- 网络图分析支持的文件格式：.xlsx, .xls（多个文件）
+- 支持的文件格式：.xlsx, .xls
 - 最大文件大小：16MB
 - 分析完成后会自动清理临时文件
-- 生成的报告和图表会保存在outputs和static目录中
-
-## 故障排除
-
-如果遇到问题，请检查：
-1. Python版本是否为3.7+
-2. 所有依赖包是否正确安装（特别是pyvis、networkx、python-louvain）
-3. 上传的Excel文件格式是否正确
-4. 文件是否包含所有必需的列
-5. 网络图分析需要上传多个文件
-6. 对于深度网络分析，确保文件包含证件号码列
+- 前后端分离版本需要同时启动两个服务
 
 ## 更新日志
 
-### v2.1 (最新)
+### v3.0 (最新) - 前后端分离版本
+- 重构为前后端分离架构
+- 新增RESTful API接口
+- 优化前端用户体验
+- 支持独立部署和扩展
+- 保持向后兼容性
+
+### v2.1 
 - 新增深度网络分析功能
 - 度中心性和介数中心性分析
 - 基于Louvain算法的社区检测
-- 聚类系数和连通分量分析
-- 网络密度计算
-- 支持证件号码列的高级网络分析
 
 ### v2.0
 - 新增网络图分析功能
 - 支持多文件上传处理
-- 智能节点数量限制（不超过150个）
-- 交互式资金流向可视化
-- 优化用户界面，支持两种分析模式切换
+- 智能节点数量限制
 
 ### v1.0
 - 基础流水分析功能

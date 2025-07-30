@@ -160,8 +160,9 @@ user.env
 
 !.devcontainer/res/scripts
 
-uploads/*
-outputs/*
-static/charts/*
-static/networks/*
+backend/uploads/*
+backend/outputs/*
+backend/static/charts/*
+backend/static/networks/*
+.claude/
 .lck
